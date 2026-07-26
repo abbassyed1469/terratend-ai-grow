@@ -31,7 +31,7 @@ function conditionIcon(cond: string): string {
   if (c.includes("rain") || c.includes("drizzle")) return "🌧️";
   if (c.includes("snow")) return "❄️";
   if (c.includes("cloud")) return "⛅";
-  if (c.includes("mist") || c.includes("fog") || c.includes("haze")) return "🌫️");
+  if (c.includes("mist") || c.includes("fog") || c.includes("haze")) return "🌫️";
   return "☀️";
 }
 

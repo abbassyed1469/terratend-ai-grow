@@ -9,6 +9,7 @@ export interface WeatherNow {
   wind: number;
   humidity: number;
   icon: string;
+  code: number;
 }
 
 export interface WeatherDay {

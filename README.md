@@ -1,6 +1,6 @@
 # 🌱 TerraTend: AI-Powered Agriculture Dashboard
 
-![TerraTend Banner](https://via.placeholder.com/1200x400/F5F2E9/2C2B26?text=TerraTend+-+Smart+Irrigation+for+Small+Farms)
+
 
 ## 📖 1. Project Name
 **TerraTend** — Live weather, daily watering guidance, and an AI advisor built to help you grow more with less water.
@@ -69,10 +69,10 @@ To deploy your own version:
 2. The Lovable CI/CD pipeline will automatically build and publish the React/Vite application, handling the Serverless AI Gateway configurations automatically.
 
 ## 📸 10. Screenshots
-*(Add high-resolution screenshots of your new animated UI here!)*
-![TerraTend Dashboard](<img width="1802" height="854" alt="image" src="https://github.com/user-attachments/assets/f174b600-7ff5-4be7-a235-157309479b5f" />
-)<img width="1840" height="810" alt="image" src="https://github.com/user-attachments/assets/40126465-0110-459b-af3e-88b1e39ed949" />
-![Uploading image.png…]()
+<img width="1910" height="911" alt="image" src="https://github.com/user-attachments/assets/cf886127-547d-4c78-9bba-7fa0f994d87e" />
+
+
+
 
 
 ## 🌐 11. Live URL

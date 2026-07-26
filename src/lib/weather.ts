@@ -104,6 +104,7 @@ export async function fetchWeather(
       return {
         day: DAYS[d.getDay()],
         icon: wmo(wx.daily.weather_code?.[i] ?? 0).icon,
+        code: wx.daily.weather_code?.[i] ?? 0,
         action: pickAction(rm, rc),
         rainMm: rm,
         rainChance: rc,

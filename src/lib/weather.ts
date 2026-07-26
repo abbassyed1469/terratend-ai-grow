@@ -102,14 +102,15 @@ export async function fetchWeather(location: string): Promise<{ now: WeatherNow;
     const cur = await curRes.json();
     const fore = await foreRes.json();
     const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    const byDay = new Map<string, { temps: number[]; rain: number; pop: number; cond: string }>();
-    for (const item of fore.list || []) {
+    type DayAgg = { temps: number[]; rain: number; pop: number; cond: string };
+    const byDay = new Map<string, DayAgg>();
+    for (const item of (fore.list || []) as any[]) {
       const d = new Date(item.dt * 1000);
       const k = days[d.getDay()];
-      const e = byDay.get(k) || { temps: [], rain: 0, pop: 0, cond: item.weather?.[0]?.main || "" };
-      e.temps.push(item.main.temp);
-      e.rain += item.rain?.["3h"] || 0;
-      e.pop = Math.max(e.pop, (item.pop || 0) * 100);
+      const e: DayAgg = byDay.get(k) || { temps: [], rain: 0, pop: 0, cond: item.weather?.[0]?.main || "" };
+      e.temps.push(Number(item.main.temp));
+      e.rain += Number(item.rain?.["3h"] || 0);
+      e.pop = Math.max(e.pop, Number(item.pop || 0) * 100);
       byDay.set(k, e);
     }
     const week: WeatherDay[] = Array.from(byDay.entries()).slice(0, 7).map(([day, v]) => {

@@ -70,6 +70,7 @@ To deploy your own version:
 
 ## 📸 10. Screenshots
 <img width="1910" height="911" alt="image" src="https://github.com/user-attachments/assets/cf886127-547d-4c78-9bba-7fa0f994d87e" />
+<img width="1831" height="841" alt="image" src="https://github.com/user-attachments/assets/e23f84f6-c1d6-4ff9-a266-f7f5a00e9b52" />
 
 
 

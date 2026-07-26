@@ -124,6 +124,7 @@ export async function fetchWeather(
         wind: Math.round(cur.wind_speed_10m),
         humidity: Math.round(cur.relative_humidity_2m ?? 0),
         icon: curW.icon,
+        code: cur.weather_code ?? 0,
       },
       week,
       source: "live",

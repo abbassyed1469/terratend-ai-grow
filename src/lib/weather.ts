@@ -142,7 +142,7 @@ export async function fetchWeather(
         wind: 0,
         humidity: 0,
         icon: "🌫️",
-      },
+        code: -1,
       week: [],
       source: "offline",
       error: e?.message || "Could not fetch weather",

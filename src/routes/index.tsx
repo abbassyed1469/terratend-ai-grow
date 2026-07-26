@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fetchWeather, todayIrrigation, type WeatherNow, type WeatherDay } from "@/lib/weather";
 import { getCropAdviceFn } from "@/lib/advice.functions";
 import { isValidCrop } from "@/lib/crops";
+import { WeatherIcon, wmoKind } from "@/components/WeatherIcon";
 
 type AdviceResult = { bullets: [string, string, string]; source: "live" | "offline" };
 
@@ -123,21 +124,23 @@ function Dashboard() {
         {/* Main grid */}
         <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
           {/* Weather */}
-          <div className="rounded-3xl bg-card p-7 shadow-sm ring-1 ring-border lg:col-span-3">
+          <div className="relative overflow-hidden rounded-3xl bg-card p-7 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_20px_50px_-25px_rgba(60,50,30,0.35)] ring-1 ring-border lg:col-span-3">
+            <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-amber-200/60 via-amber-100/30 to-transparent blur-2xl" />
+            <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-gradient-to-tr from-emerald-200/40 via-emerald-100/20 to-transparent blur-3xl" />
             {wxLoading ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading weather…
               </div>
             ) : wxError || !now ? (
               <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
-                <div className="text-4xl">🌫️</div>
+                <WeatherIcon kind="fog" size={72} />
                 <div className="font-serif text-lg font-semibold text-foreground">Location not found</div>
                 <p className="max-w-xs text-sm text-muted-foreground">
                   Couldn't find weather for "{pendingLocation}". Try a nearby city name.
                 </p>
               </div>
             ) : (
-              <>
+              <div className="relative">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
@@ -149,9 +152,11 @@ function Dashboard() {
                   </span>
                 </div>
                 <div className="mt-6 flex items-center gap-6">
-                  <div className="text-7xl leading-none">{now.icon}</div>
+                  <div className="wx-float">
+                    <WeatherIcon kind={wmoKind(now.code)} size={120} animated />
+                  </div>
                   <div>
-                    <div className="font-serif text-6xl font-semibold text-foreground">
+                    <div className="font-serif text-6xl font-semibold tracking-tight text-foreground">
                       {now.temp}°
                     </div>
                     <div className="mt-1 text-lg capitalize text-muted-foreground">{now.condition}</div>
@@ -163,14 +168,14 @@ function Dashboard() {
                   <StatTile icon={<Droplets className="h-4 w-4" />} label="Humidity" value={`${now.humidity}%`} />
                   <StatTile icon={<Wind className="h-4 w-4" />} label="Wind" value={`${now.wind} km/h`} />
                 </div>
-
-              </>
+              </div>
             )}
           </div>
 
           {/* Irrigation + 7-day */}
           <div className="flex flex-col gap-6 lg:col-span-2">
-            <div className="rounded-3xl bg-secondary p-7 shadow-sm ring-1 ring-border">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary to-[color-mix(in_oklab,var(--tan)_70%,white)] p-7 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_20px_50px_-25px_rgba(60,50,30,0.35)] ring-1 ring-border">
+              <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
               <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">
                 Today's irrigation
               </div>
@@ -188,7 +193,7 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="rounded-3xl bg-card p-6 shadow-sm ring-1 ring-border">
+            <div className="rounded-3xl bg-card p-6 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_20px_50px_-25px_rgba(60,50,30,0.3)] ring-1 ring-border">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">
                 7-day watering outlook
               </div>
@@ -197,8 +202,8 @@ function Dashboard() {
                   <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
                 )}
                 {week.map((d, i) => (
-                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 py-2.5 text-sm">
-                    <span className="text-lg">{d.icon}</span>
+                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 py-2 text-sm">
+                    <WeatherIcon kind={wmoKind(d.code)} size={28} />
                     <span className="font-medium text-foreground">{d.day}</span>
                     <ActionBadge action={d.action} />
                     <span className="w-14 text-right tabular-nums text-muted-foreground">{d.rainMm}mm</span>
@@ -211,7 +216,8 @@ function Dashboard() {
         </section>
 
         {/* AI Advisor */}
-        <section className="mt-6 rounded-3xl bg-card p-7 shadow-sm ring-1 ring-border">
+        <section className="relative mt-6 overflow-hidden rounded-3xl bg-card p-7 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_20px_50px_-25px_rgba(60,50,30,0.35)] ring-1 ring-border">
+          <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="flex items-center gap-2">
             <Leaf className="h-5 w-5 text-primary" />
             <h2 className="font-serif text-2xl font-semibold text-foreground">AI Crop & Soil Advisor</h2>

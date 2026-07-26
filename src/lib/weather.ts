@@ -9,11 +9,13 @@ export interface WeatherNow {
   wind: number;
   humidity: number;
   icon: string;
+  code: number;
 }
 
 export interface WeatherDay {
   day: string;
   icon: string;
+  code: number;
   action: "Water" | "Light" | "Skip";
   rainMm: number;
   rainChance: number;
@@ -102,6 +104,7 @@ export async function fetchWeather(
       return {
         day: DAYS[d.getDay()],
         icon: wmo(wx.daily.weather_code?.[i] ?? 0).icon,
+        code: wx.daily.weather_code?.[i] ?? 0,
         action: pickAction(rm, rc),
         rainMm: rm,
         rainChance: rc,
@@ -123,6 +126,7 @@ export async function fetchWeather(
         wind: Math.round(cur.wind_speed_10m),
         humidity: Math.round(cur.relative_humidity_2m ?? 0),
         icon: curW.icon,
+        code: cur.weather_code ?? 0,
       },
       week,
       source: "live",
@@ -140,6 +144,7 @@ export async function fetchWeather(
         wind: 0,
         humidity: 0,
         icon: "🌫️",
+        code: -1,
       },
       week: [],
       source: "offline",

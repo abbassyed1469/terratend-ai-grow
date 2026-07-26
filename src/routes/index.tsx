@@ -1,12 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { MapPin, Search, Loader2, Sparkles, Leaf, Wind, CloudRain, Droplets, ThermometerSun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchWeather, todayIrrigation, type WeatherNow, type WeatherDay } from "@/lib/weather";
-import { getCropAdvice, type AdviceResult } from "@/lib/gemini";
+import { getCropAdviceFn } from "@/lib/advice.functions";
 import { isValidCrop } from "@/lib/crops";
+
+type AdviceResult = { bullets: [string, string, string]; source: "live" | "offline" };
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,12 +29,13 @@ export const Route = createFileRoute("/")({
 const SOILS = ["Sandy", "Loamy", "Clay", "Silt", "Peat"] as const;
 
 function Dashboard() {
-  const [locationInput, setLocationInput] = useState("Lahore, Punjab, Pakistan");
-  const [pendingLocation, setPendingLocation] = useState("Lahore, Punjab, Pakistan");
+  const [locationInput, setLocationInput] = useState("Lahore");
+  const [pendingLocation, setPendingLocation] = useState("Lahore");
   const [now, setNow] = useState<WeatherNow | null>(null);
   const [week, setWeek] = useState<WeatherDay[]>([]);
   const [wxSource, setWxSource] = useState<"live" | "offline">("offline");
   const [wxLoading, setWxLoading] = useState(true);
+  const [wxError, setWxError] = useState<string | null>(null);
 
   const [crop, setCrop] = useState("");
   const [soil, setSoil] = useState<string>("Loamy");
@@ -38,20 +43,27 @@ function Dashboard() {
   const [adviceLoading, setAdviceLoading] = useState(false);
   const [cropError, setCropError] = useState<string | null>(null);
 
+  const getAdvice = useServerFn(getCropAdviceFn);
+
   useEffect(() => {
     let alive = true;
     setWxLoading(true);
+    setWxError(null);
     fetchWeather(pendingLocation).then((r) => {
       if (!alive) return;
       setNow(r.now);
       setWeek(r.week);
       setWxSource(r.source);
+      setWxError(r.error ?? null);
       setWxLoading(false);
     });
     return () => { alive = false; };
   }, [pendingLocation]);
 
-  const handleUpdate = () => setPendingLocation(locationInput.trim() || pendingLocation);
+  const handleUpdate = () => {
+    const v = locationInput.trim();
+    if (v) setPendingLocation(v);
+  };
 
   const handleAdvice = async () => {
     setCropError(null);
@@ -61,12 +73,18 @@ function Dashboard() {
     }
     setAdviceLoading(true);
     setAdvice(null);
-    const r = await getCropAdvice(crop, soil);
-    setAdvice(r);
-    setAdviceLoading(false);
+    try {
+      const r = await getAdvice({ data: { crop: crop.trim(), soil } });
+      setAdvice(r as AdviceResult);
+    } catch {
+      setCropError("Could not fetch advice. Please try again.");
+    } finally {
+      setAdviceLoading(false);
+    }
   };
 
-  const irrigation = now ? todayIrrigation(now) : null;
+  const irrigation = now && !wxError ? todayIrrigation(now) : null;
+
 
   return (
     <div className="min-h-screen bg-background">

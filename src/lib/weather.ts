@@ -15,6 +15,7 @@ export interface WeatherNow {
 export interface WeatherDay {
   day: string;
   icon: string;
+  code: number;
   action: "Water" | "Light" | "Skip";
   rainMm: number;
   rainChance: number;

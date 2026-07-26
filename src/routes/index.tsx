@@ -109,9 +109,10 @@ function Dashboard() {
               value={locationInput}
               onChange={(e) => setLocationInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
-              placeholder="City, region, country"
+              placeholder="Enter place name (e.g. Lahore)"
               className="h-9 min-w-0 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 lg:w-64"
             />
+
             <Button onClick={handleUpdate} className="h-9 rounded-full px-5" size="sm">
               <Search className="mr-1 h-3.5 w-3.5" />
               Update
@@ -123,9 +124,17 @@ function Dashboard() {
         <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
           {/* Weather */}
           <div className="rounded-3xl bg-card p-7 shadow-sm ring-1 ring-border lg:col-span-3">
-            {wxLoading || !now ? (
+            {wxLoading ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading weather…
+              </div>
+            ) : wxError || !now ? (
+              <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
+                <div className="text-4xl">🌫️</div>
+                <div className="font-serif text-lg font-semibold text-foreground">Location not found</div>
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  Couldn't find weather for "{pendingLocation}". Try a nearby city name.
+                </p>
               </div>
             ) : (
               <>
@@ -134,8 +143,9 @@ function Dashboard() {
                     <MapPin className="h-4 w-4" />
                     <span className="truncate">{now.location}</span>
                   </div>
-                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-secondary-foreground">
-                    {wxSource === "live" ? "Live weather" : "Offline demo"}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                    {wxSource === "live" ? "Live weather" : "Offline"}
                   </span>
                 </div>
                 <div className="mt-6 flex items-center gap-6">
@@ -150,9 +160,10 @@ function Dashboard() {
                 <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <StatTile icon={<ThermometerSun className="h-4 w-4" />} label="High / Low" value={`${now.high}° / ${now.low}°`} />
                   <StatTile icon={<CloudRain className="h-4 w-4" />} label="Rain 24h" value={`${now.rain24h} mm`} />
-                  <StatTile icon={<Droplets className="h-4 w-4" />} label="Rain chance" value={`${now.rainChance}%`} />
+                  <StatTile icon={<Droplets className="h-4 w-4" />} label="Humidity" value={`${now.humidity}%`} />
                   <StatTile icon={<Wind className="h-4 w-4" />} label="Wind" value={`${now.wind} km/h`} />
                 </div>
+
               </>
             )}
           </div>

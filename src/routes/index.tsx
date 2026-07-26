@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { fetchWeather, todayIrrigation, type WeatherNow, type WeatherDay } from "@/lib/weather";
 import { getCropAdviceFn } from "@/lib/advice.functions";
 import { isValidCrop } from "@/lib/crops";
+import { WeatherIcon, wmoKind } from "@/components/WeatherIcon";
 
 type AdviceResult = { bullets: [string, string, string]; source: "live" | "offline" };
 

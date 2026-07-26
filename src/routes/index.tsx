@@ -124,21 +124,23 @@ function Dashboard() {
         {/* Main grid */}
         <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
           {/* Weather */}
-          <div className="rounded-3xl bg-card p-7 shadow-sm ring-1 ring-border lg:col-span-3">
+          <div className="relative overflow-hidden rounded-3xl bg-card p-7 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_20px_50px_-25px_rgba(60,50,30,0.35)] ring-1 ring-border lg:col-span-3">
+            <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-amber-200/60 via-amber-100/30 to-transparent blur-2xl" />
+            <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-16 h-72 w-72 rounded-full bg-gradient-to-tr from-emerald-200/40 via-emerald-100/20 to-transparent blur-3xl" />
             {wxLoading ? (
               <div className="flex h-64 items-center justify-center text-muted-foreground">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading weather…
               </div>
             ) : wxError || !now ? (
               <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
-                <div className="text-4xl">🌫️</div>
+                <WeatherIcon kind="fog" size={72} />
                 <div className="font-serif text-lg font-semibold text-foreground">Location not found</div>
                 <p className="max-w-xs text-sm text-muted-foreground">
                   Couldn't find weather for "{pendingLocation}". Try a nearby city name.
                 </p>
               </div>
             ) : (
-              <>
+              <div className="relative">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
@@ -150,9 +152,11 @@ function Dashboard() {
                   </span>
                 </div>
                 <div className="mt-6 flex items-center gap-6">
-                  <div className="text-7xl leading-none">{now.icon}</div>
+                  <div className="wx-float">
+                    <WeatherIcon kind={wmoKind(now.code)} size={120} animated />
+                  </div>
                   <div>
-                    <div className="font-serif text-6xl font-semibold text-foreground">
+                    <div className="font-serif text-6xl font-semibold tracking-tight text-foreground">
                       {now.temp}°
                     </div>
                     <div className="mt-1 text-lg capitalize text-muted-foreground">{now.condition}</div>
@@ -164,8 +168,7 @@ function Dashboard() {
                   <StatTile icon={<Droplets className="h-4 w-4" />} label="Humidity" value={`${now.humidity}%`} />
                   <StatTile icon={<Wind className="h-4 w-4" />} label="Wind" value={`${now.wind} km/h`} />
                 </div>
-
-              </>
+              </div>
             )}
           </div>
 

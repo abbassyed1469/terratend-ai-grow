@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "TerraTend — Smart irrigation for small farms" },
+      { name: "description", content: "Live weather, daily watering guidance, and an AI crop advisor for small farms." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "TerraTend — Smart irrigation for small farms" },
+      { property: "og:description", content: "Live weather, daily watering guidance, and an AI crop advisor for small farms." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "TerraTend — Smart irrigation for small farms" },
+      { name: "twitter:description", content: "Live weather, daily watering guidance, and an AI crop advisor for small farms." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6f3d9ac5-4ac3-4402-856e-480fc4c2c593/id-preview-b57290f9--46e7ce42-9e92-4ec7-844b-07f911b35565.lovable.app-1785092307810.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6f3d9ac5-4ac3-4402-856e-480fc4c2c593/id-preview-b57290f9--46e7ce42-9e92-4ec7-844b-07f911b35565.lovable.app-1785092307810.png" },
     ],
     links: [
       {

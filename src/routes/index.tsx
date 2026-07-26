@@ -174,7 +174,8 @@ function Dashboard() {
 
           {/* Irrigation + 7-day */}
           <div className="flex flex-col gap-6 lg:col-span-2">
-            <div className="rounded-3xl bg-secondary p-7 shadow-sm ring-1 ring-border">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary to-[color-mix(in_oklab,var(--tan)_70%,white)] p-7 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset,0_20px_50px_-25px_rgba(60,50,30,0.35)] ring-1 ring-border">
+              <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
               <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">
                 Today's irrigation
               </div>
@@ -192,7 +193,7 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="rounded-3xl bg-card p-6 shadow-sm ring-1 ring-border">
+            <div className="rounded-3xl bg-card p-6 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_20px_50px_-25px_rgba(60,50,30,0.3)] ring-1 ring-border">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-primary">
                 7-day watering outlook
               </div>
@@ -201,8 +202,8 @@ function Dashboard() {
                   <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
                 )}
                 {week.map((d, i) => (
-                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 py-2.5 text-sm">
-                    <span className="text-lg">{d.icon}</span>
+                  <div key={i} className="grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 py-2 text-sm">
+                    <WeatherIcon kind={wmoKind(d.code)} size={28} />
                     <span className="font-medium text-foreground">{d.day}</span>
                     <ActionBadge action={d.action} />
                     <span className="w-14 text-right tabular-nums text-muted-foreground">{d.rainMm}mm</span>

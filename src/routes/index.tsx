@@ -216,7 +216,8 @@ function Dashboard() {
         </section>
 
         {/* AI Advisor */}
-        <section className="mt-6 rounded-3xl bg-card p-7 shadow-sm ring-1 ring-border">
+        <section className="relative mt-6 overflow-hidden rounded-3xl bg-card p-7 shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_20px_50px_-25px_rgba(60,50,30,0.35)] ring-1 ring-border">
+          <div aria-hidden className="pointer-events-none absolute -right-24 -bottom-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
           <div className="flex items-center gap-2">
             <Leaf className="h-5 w-5 text-primary" />
             <h2 className="font-serif text-2xl font-semibold text-foreground">AI Crop & Soil Advisor</h2>

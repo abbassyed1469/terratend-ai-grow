@@ -7,6 +7,7 @@ export interface WeatherNow {
   rain24h: number;
   rainChance: number;
   wind: number;
+  humidity: number;
   icon: string;
 }
 
@@ -25,118 +26,125 @@ function pickAction(rainMm: number, rainChance: number): "Water" | "Light" | "Sk
   return "Water";
 }
 
-function conditionIcon(cond: string): string {
-  const c = cond.toLowerCase();
-  if (c.includes("thunder")) return "⛈️";
-  if (c.includes("rain") || c.includes("drizzle")) return "🌧️";
-  if (c.includes("snow")) return "❄️";
-  if (c.includes("cloud")) return "⛅";
-  if (c.includes("mist") || c.includes("fog") || c.includes("haze")) return "🌫️";
-  return "☀️";
+// WMO weather code → { label, icon }
+const WMO: Record<number, { label: string; icon: string }> = {
+  0: { label: "Clear sky", icon: "☀️" },
+  1: { label: "Mainly clear", icon: "🌤️" },
+  2: { label: "Partly cloudy", icon: "⛅" },
+  3: { label: "Overcast", icon: "☁️" },
+  45: { label: "Fog", icon: "🌫️" },
+  48: { label: "Rime fog", icon: "🌫️" },
+  51: { label: "Light drizzle", icon: "🌦️" },
+  53: { label: "Drizzle", icon: "🌦️" },
+  55: { label: "Heavy drizzle", icon: "🌧️" },
+  61: { label: "Light rain", icon: "🌦️" },
+  63: { label: "Rain", icon: "🌧️" },
+  65: { label: "Heavy rain", icon: "🌧️" },
+  71: { label: "Light snow", icon: "🌨️" },
+  73: { label: "Snow", icon: "❄️" },
+  75: { label: "Heavy snow", icon: "❄️" },
+  80: { label: "Rain showers", icon: "🌦️" },
+  81: { label: "Heavy showers", icon: "🌧️" },
+  82: { label: "Violent showers", icon: "⛈️" },
+  95: { label: "Thunderstorm", icon: "⛈️" },
+  96: { label: "Thunderstorm w/ hail", icon: "⛈️" },
+  99: { label: "Severe thunderstorm", icon: "⛈️" },
+};
+
+function wmo(code: number) {
+  return WMO[code] ?? { label: "Fair", icon: "🌤️" };
 }
 
-// Deterministic pseudo weather generator so the UI feels alive without a key
-function mockWeather(location: string): { now: WeatherNow; week: WeatherDay[] } {
-  const seed = Array.from(location).reduce((a, c) => a + c.charCodeAt(0), 0);
-  const rand = (i: number) => {
-    const x = Math.sin(seed + i * 13.37) * 10000;
-    return x - Math.floor(x);
-  };
-  const baseTemp = 15 + Math.round(rand(0) * 18);
-  const conds = ["Mostly clear", "Partly cloudy", "Light rain", "Cloudy", "Sunny"];
-  const cond = conds[Math.floor(rand(1) * conds.length)];
-  const rainChance = Math.round(rand(2) * 100);
-  const rain24 = Number((rand(3) * 3).toFixed(1));
-  const wind = Math.round(5 + rand(4) * 20);
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  const today = new Date().getDay();
-  const week: WeatherDay[] = Array.from({ length: 7 }).map((_, i) => {
-    const r = rand(10 + i);
-    const rc = Math.round(r * 100);
-    const rm = Number((r * 6).toFixed(1));
-    const t = baseTemp + Math.round((rand(20 + i) - 0.5) * 8);
-    const c = rc > 60 ? "Rain" : rc > 30 ? "Cloud" : "Clear";
-    return {
-      day: days[(today + i) % 7],
-      icon: conditionIcon(c),
-      action: pickAction(rm, rc),
-      rainMm: rm,
-      rainChance: rc,
-      temp: t,
-    };
-  });
-
-  return {
-    now: {
-      location,
-      temp: baseTemp,
-      condition: cond,
-      high: baseTemp + 4,
-      low: baseTemp - 5,
-      rain24h: rain24,
-      rainChance,
-      wind,
-      icon: conditionIcon(cond),
-    },
-    week,
-  };
-}
-
-export async function fetchWeather(location: string): Promise<{ now: WeatherNow; week: WeatherDay[]; source: "live" | "offline" }> {
-  const key = import.meta.env.VITE_OPENWEATHER_API_KEY as string | undefined;
-  if (!key) {
-    return { ...mockWeather(location), source: "offline" };
-  }
+export async function fetchWeather(
+  location: string
+): Promise<{ now: WeatherNow; week: WeatherDay[]; source: "live" | "offline"; error?: string }> {
   try {
     const geoRes = await fetch(
-      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${key}`
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
     );
     const geo = await geoRes.json();
-    if (!geo?.[0]) throw new Error("no geo");
-    const { lat, lon, name, country, state } = geo[0];
-    const [curRes, foreRes] = await Promise.all([
-      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${key}`),
-      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${key}`),
-    ]);
-    const cur = await curRes.json();
-    const fore = await foreRes.json();
-    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    type DayAgg = { temps: number[]; rain: number; pop: number; cond: string };
-    const byDay = new Map<string, DayAgg>();
-    for (const item of (fore.list || []) as any[]) {
-      const d = new Date(item.dt * 1000);
-      const k = days[d.getDay()];
-      const e: DayAgg = byDay.get(k) || { temps: [], rain: 0, pop: 0, cond: item.weather?.[0]?.main || "" };
-      e.temps.push(Number(item.main.temp));
-      e.rain += Number(item.rain?.["3h"] || 0);
-      e.pop = Math.max(e.pop, Number(item.pop || 0) * 100);
-      byDay.set(k, e);
-    }
-    const week: WeatherDay[] = Array.from(byDay.entries()).slice(0, 7).map(([day, v]) => {
-      const rm = Number(v.rain.toFixed(1));
-      const rc = Math.round(v.pop);
-      const t = Math.round(v.temps.reduce((a, b) => a + b, 0) / v.temps.length);
-      return { day, icon: conditionIcon(v.cond), action: pickAction(rm, rc), rainMm: rm, rainChance: rc, temp: t };
+    const g = geo?.results?.[0];
+    if (!g) throw new Error("Location not found");
+
+    const { latitude: lat, longitude: lon, name, admin1, country } = g;
+
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max` +
+      `&hourly=precipitation,precipitation_probability` +
+      `&timezone=auto&forecast_days=7&wind_speed_unit=kmh`;
+    const wxRes = await fetch(url);
+    const wx = await wxRes.json();
+    if (!wx?.current || !wx?.daily) throw new Error("Weather unavailable");
+
+    // Next 24h aggregates
+    const hourly = wx.hourly || {};
+    const rain24h = Number(
+      ((hourly.precipitation || []).slice(0, 24).reduce((a: number, b: number) => a + (b || 0), 0)).toFixed(1)
+    );
+    const rainChance = Math.max(
+      0,
+      ...(hourly.precipitation_probability || []).slice(0, 24).map((n: number) => n || 0)
+    );
+
+    const cur = wx.current;
+    const curW = wmo(cur.weather_code);
+    const todayMax = Math.round(wx.daily.temperature_2m_max?.[0] ?? cur.temperature_2m);
+    const todayMin = Math.round(wx.daily.temperature_2m_min?.[0] ?? cur.temperature_2m);
+
+    const week: WeatherDay[] = (wx.daily.time as string[]).slice(0, 7).map((t, i) => {
+      const d = new Date(t);
+      const rm = Number((wx.daily.precipitation_sum?.[i] ?? 0).toFixed(1));
+      const rc = Math.round(wx.daily.precipitation_probability_max?.[i] ?? 0);
+      return {
+        day: DAYS[d.getDay()],
+        icon: wmo(wx.daily.weather_code?.[i] ?? 0).icon,
+        action: pickAction(rm, rc),
+        rainMm: rm,
+        rainChance: rc,
+        temp: Math.round(wx.daily.temperature_2m_max?.[i] ?? 0),
+      };
     });
-    const locName = [name, state, country].filter(Boolean).join(", ");
+
+    const locName = [name, admin1, country].filter(Boolean).join(", ");
+
     return {
       now: {
         location: locName,
-        temp: Math.round(cur.main.temp),
-        condition: cur.weather?.[0]?.description || "",
-        high: Math.round(cur.main.temp_max),
-        low: Math.round(cur.main.temp_min),
-        rain24h: Number(((cur.rain?.["1h"] || 0) * 24).toFixed(1)),
-        rainChance: week[0]?.rainChance ?? 0,
-        wind: Math.round((cur.wind?.speed || 0) * 3.6),
-        icon: conditionIcon(cur.weather?.[0]?.main || ""),
+        temp: Math.round(cur.temperature_2m),
+        condition: curW.label,
+        high: todayMax,
+        low: todayMin,
+        rain24h,
+        rainChance,
+        wind: Math.round(cur.wind_speed_10m),
+        humidity: Math.round(cur.relative_humidity_2m ?? 0),
+        icon: curW.icon,
       },
       week,
       source: "live",
     };
-  } catch {
-    return { ...mockWeather(location), source: "offline" };
+  } catch (e: any) {
+    return {
+      now: {
+        location,
+        temp: 0,
+        condition: "Unavailable",
+        high: 0,
+        low: 0,
+        rain24h: 0,
+        rainChance: 0,
+        wind: 0,
+        humidity: 0,
+        icon: "🌫️",
+      },
+      week: [],
+      source: "offline",
+      error: e?.message || "Could not fetch weather",
+    };
   }
 }
 
@@ -144,7 +152,7 @@ export function todayIrrigation(now: WeatherNow): { title: string; reason: strin
   if (now.rainChance >= 70 || now.rain24h >= 5) {
     return {
       title: "🚫 Skip watering today",
-      reason: `Heavy rain is expected (${now.rainChance}% chance, ~${now.rain24h}mm). Let nature do the work.`,
+      reason: `Heavy rain is expected (${now.rainChance}% chance, ~${now.rain24h}mm in 24h). Let nature do the work.`,
     };
   }
   if (now.rainChance >= 40 || now.rain24h >= 1) {
@@ -155,6 +163,6 @@ export function todayIrrigation(now: WeatherNow): { title: string; reason: strin
   }
   return {
     title: "🌾 Water thoroughly",
-    reason: `Low rain chance (${now.rainChance}%) and warm temperatures near ${now.temp}°. A deep watering will help roots.`,
+    reason: `Low rain chance (${now.rainChance}%) with temperatures near ${now.temp}°C. A deep watering will help roots.`,
   };
 }

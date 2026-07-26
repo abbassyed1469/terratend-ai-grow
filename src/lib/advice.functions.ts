@@ -1,7 +1,5 @@
-export interface AdviceResult {
-  bullets: [string, string, string];
-  source: "live" | "offline";
-}
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 
 const SOIL_NOTES: Record<string, { drain: string; nutrients: string }> = {
   Sandy: {
@@ -36,39 +34,56 @@ function ruleAdvice(crop: string, soil: string): [string, string, string] {
   ];
 }
 
-export async function getCropAdvice(crop: string, soil: string): Promise<AdviceResult> {
-  const key = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-  const fallback: AdviceResult = { bullets: ruleAdvice(crop, soil), source: "offline" };
-  if (!key) return fallback;
+const Input = z.object({
+  crop: z.string().min(1).max(80),
+  soil: z.string().min(1).max(40),
+});
 
-  const prompt = `You are an expert agronomist. For the crop "${crop}" grown in ${soil} soil, respond with EXACTLY 3 concise bullet points (each 1-2 sentences), covering in order:
+export const getCropAdviceFn = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => Input.parse(d))
+  .handler(async ({ data }) => {
+    const key = process.env.LOVABLE_API_KEY;
+    const fallback = {
+      bullets: ruleAdvice(data.crop, data.soil) as [string, string, string],
+      source: "offline" as const,
+    };
+    if (!key) return fallback;
+
+    const prompt = `You are an expert agronomist. For the crop "${data.crop}" grown in ${data.soil} soil, respond with EXACTLY 3 concise bullet points (each 1-2 sentences), covering in order:
 1. Irrigation strategy
 2. Fertilizer / nutrient recommendation
 3. Disease & pest prevention
-Return ONLY the three bullets, each starting with "- ". No preamble.`;
+Return ONLY the three bullets, each starting with "- ". No preamble, no closing remarks.`;
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-      {
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "You are a concise, practical agronomy assistant." },
+            { role: "user", content: prompt },
+          ],
         }),
-      }
-    );
-    if (!res.ok) return fallback;
-    const data = await res.json();
-    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const bullets = text
-      .split("\n")
-      .map((l) => l.replace(/^[-*•\d.\s]+/, "").trim())
-      .filter(Boolean)
-      .slice(0, 3);
-    if (bullets.length < 3) return fallback;
-    return { bullets: [bullets[0], bullets[1], bullets[2]], source: "live" };
-  } catch {
-    return fallback;
-  }
-}
+      });
+      if (!res.ok) return fallback;
+      const json = await res.json();
+      const text: string = json?.choices?.[0]?.message?.content || "";
+      const bullets = text
+        .split("\n")
+        .map((l) => l.replace(/^[-*•\d.\s]+/, "").trim())
+        .filter(Boolean)
+        .slice(0, 3);
+      if (bullets.length < 3) return fallback;
+      return {
+        bullets: [bullets[0], bullets[1], bullets[2]] as [string, string, string],
+        source: "live" as const,
+      };
+    } catch {
+      return fallback;
+    }
+  });
